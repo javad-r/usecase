@@ -8,6 +8,7 @@ from azure.identity import DefaultAzureCredential
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 
+
 def init():
     global model, vectorizer, mlb, topic_mapping
 
@@ -61,11 +62,8 @@ def run(raw_data):
                 "decoded_topics": decoded
             })
 
-        # Convert inference results to JSON format
-        response_json = json.dumps(inference_results, indent=4)
-
         # Return predictions
-        return response_json
+        return inference_results
     except Exception as e:
         return {"error": str(e)}
     
