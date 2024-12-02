@@ -8,10 +8,10 @@ from azure.identity import DefaultAzureCredential
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 
-
 def init():
-    global model, vectorizer, mlb
+    global model, vectorizer, mlb, topic_mapping
 
+    # Models are now available in the deployment folder
     model_dir_path = os.path.join(os.getenv('AZUREML_MODEL_DIR'), 'outputs')
     
     try:
@@ -19,10 +19,19 @@ def init():
         model = joblib.load(os.path.join(model_dir_path, 'dummymultilabel_classifier.pkl'))
         vectorizer = joblib.load(os.path.join(model_dir_path, 'vectorizer.pkl'))
         mlb = joblib.load(os.path.join(model_dir_path, 'label_classes.pkl'))
+        topic_mapping = joblib.load(os.path.join(model_dir_path, 'topic_mapping.pkl'))
         print("Model and preprocessing objects loaded successfully")
     except Exception as e:
         print(f"Error loading model: {str(e)}")
         raise
+
+# Function to decode predictions using topic mapping
+def decode_label_predictions(predictions, topic_mapping):
+    decoded_results = []
+    for pred in predictions:
+        decoded_topics = [topic_mapping.get(topic_id, ["Unknown"]) for topic_id in pred]
+        decoded_results.append(decoded_topics)
+    return decoded_results
 
 def run(raw_data):
     try:
@@ -36,9 +45,27 @@ def run(raw_data):
 
         # Predict labels
         predictions = model.predict(vectorized_data)
-        decoded_labels = mlb.inverse_transform(predictions)
+
+        labels = mlb.inverse_transform(predictions)
+        formatted_topics = [[f"topic {topic}" for topic in topic_list] for topic_list in labels]
+
+        # Decode the predictions into human-readable topics
+        decoded_terms = decode_label_predictions(labels, topic_mapping)
+
+        # Serialize the results to JSON
+        inference_results = []
+        for text, pred, decoded in zip(texts, formatted_topics, decoded_terms):
+            inference_results.append({
+                "input_text": text,
+                "predicted_topics": pred,
+                "decoded_topics": decoded
+            })
+
+        # Convert inference results to JSON format
+        response_json = json.dumps(inference_results, indent=4)
 
         # Return predictions
-        return {"predictions": decoded_labels}
+        return response_json
     except Exception as e:
         return {"error": str(e)}
+    

@@ -44,12 +44,15 @@ def main(args):
     # Save the vectorize and binarization for the inference
     vectorizer_path = os.path.join(args.input_dir, "vectorizer.pkl")
     mlb_path = os.path.join(args.input_dir, "label_classes.pkl")
+    topic_mapping_path = os.path.join(args.input_dir, "topic_mapping.pkl")
 
     run.upload_file(name="outputs/vectorizer.pkl", path_or_stream=vectorizer_path)
 
     run.upload_file(name="outputs/label_classes.pkl", path_or_stream=mlb_path)
 
-    # Register the model including all artifacts in Azure ML
+    run.upload_file(name="outputs/topic_mapping.pkl", path_or_stream=topic_mapping_path)
+    
+    # Register the model  including all artifacts in Azure ML
     model = run.register_model(
         model_path="outputs/",
         model_name='multilabel_classifier', 

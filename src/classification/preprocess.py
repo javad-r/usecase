@@ -42,14 +42,29 @@ def main(args):
     vectorizer_path = os.path.join(args.output_dir, "vectorizer.pkl")
     joblib.dump(vectorizer, vectorizer_path)
     print(f"Vectorizer saved at {vectorizer_path}")
+
     mlb_path = os.path.join(args.output_dir, "label_classes.pkl")
     joblib.dump(mlb, mlb_path)
     print(f"MultiLabelBinarizer saved at {mlb_path}")
+
+    # store topic mapping
+    tabular_dataset = run.input_datasets["input_data_2"] # topic mapping
+    topic_df = tabular_dataset.to_pandas_dataframe()
+    topic_mapping = {}
+    for _, row in topic_df.iterrows():
+        topic_id = int(row['topic'].split()[1])  
+        keywords = row['terms'].split(",")
+        topic_mapping[topic_id] = keywords
+    topic_mapping_path = os.path.join(args.output_dir, "topic_mapping.pkl")
+    joblib.dump(topic_mapping, topic_mapping_path)  # Serialize and save the mapping
+    print(f"Topic mapping saved at {topic_mapping_path}")
 
 
     # Log artifacts to the current run
     run.log("Vectorizer Path", vectorizer_path)
     run.log("Label Binarizer Path", mlb_path)
+    run.log("Topic mapping Path", topic_mapping_path)
+
 
 
 if __name__ == "__main__":
