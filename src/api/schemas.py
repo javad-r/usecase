@@ -1,10 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import Dict
-from typing import Optional
+from typing import List, Optional
 
 class TextRequest(BaseModel):
-    text: str= Field(..., min_length=5, max_length=1000)
+    text: List[str] = Field(..., min_items=1, max_items=100, description="List of input texts for prediction.")
+
+class TopicPrediction(BaseModel):
+    input_text: str
+    predicted_topics: List[str]
+    decoded_topics: List[List[str]]
 
 class TextResponse(BaseModel):
-    topics: Optional[Dict[str, float]]
+    topics: Optional[List[TopicPrediction]] = None
     error: Optional[str] = None
+    
